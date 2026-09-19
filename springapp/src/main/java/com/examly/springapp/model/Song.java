@@ -16,7 +16,7 @@ public class Song {
     
     public Song() {}
     
-    public Song(Long id, String title, String artist, String album, String genre, int duration, String audioUrl, String metadata, LocalDateTime uploadDate, Long playCount, boolean isActive) {
+    public Song(Long id, String title, String artist, String album, String genre, int duration, String audioUrl, String metadata, LocalDateTime uploadDate, Long playCount, boolean isActive, User user) {
         this.id = id;
         this.title = title;
         this.artist = artist;
@@ -28,6 +28,7 @@ public class Song {
         this.uploadDate = uploadDate;
         this.playCount = playCount;
         this.isActive = isActive;
+        this.user = user;
     }
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -65,10 +66,17 @@ public class Song {
 
     @Column(name = "is_active")
     private boolean isActive = true;
+    
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @PrePersist
     protected void onCreate() {
         uploadDate = LocalDateTime.now();
+        if (user == null) {
+            throw new IllegalStateException("Song must be associated with a user");
+        }
     }
     
     // Getters and Setters
@@ -104,4 +112,7 @@ public class Song {
     
     public boolean isActive() { return isActive; }
     public void setActive(boolean active) { isActive = active; }
+    
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
 }

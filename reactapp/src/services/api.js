@@ -21,17 +21,26 @@ const createHeaders = (includeAuth = false) => {
   return headers;
 };
 
-// Function to add a new song
+// Function to add a new song to user's collection
 export async function addSong(song) {
- console.log("Attempting to add song:", song);
+ console.log("Attempting to add song to user collection:", song);
  console.log("API URL:", `${BASE_URL}/addSong`);
  
  try {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error('Authentication required. Please login first.');
+  }
+  
   const res = await fetch(`${BASE_URL}/addSong`, {
    method: "POST",
    mode: 'cors',
    credentials: 'omit',
-   headers: createHeaders(true), // Include auth token
+   headers: {
+     "Content-Type": "application/json",
+     "Accept": "application/json",
+     "Authorization": `Bearer ${token}`
+   },
    body: JSON.stringify(song),
   });
   
@@ -45,7 +54,7 @@ export async function addSong(song) {
   }
   
   const result = await res.json();
-  console.log("Song added successfully:", result);
+  console.log("Song added to user collection successfully:", result);
   return result;
  } catch (error) {
   console.error("Network error:", error);
@@ -53,25 +62,34 @@ export async function addSong(song) {
  }
 }
 
-// Function to retrieve all songs
+// Function to retrieve user's songs
 export async function getAllSongs() {
  try {
-  console.log('Fetching all songs from:', `${BASE_URL}/allSongs`);
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error('Authentication required. Please login first.');
+  }
+  
+  console.log('Fetching user songs from:', `${BASE_URL}/allSongs`);
   const res = await fetch(`${BASE_URL}/allSongs`, {
    method: 'GET',
    mode: 'cors',
    credentials: 'omit',
-   headers: createHeaders(true) // Include auth token
+   headers: {
+     "Content-Type": "application/json",
+     "Accept": "application/json",
+     "Authorization": `Bearer ${token}`
+   }
   });
   
   if (!res.ok) {
    const errorText = await res.text();
    console.error('Fetch failed:', res.status, errorText);
-   throw new Error(`Failed to fetch all songs: ${res.status}`);
+   throw new Error(`Failed to fetch user songs: ${res.status}`);
   }
   
   const result = await res.json();
-  console.log('Fetched songs:', result);
+  console.log('Fetched user songs:', result);
   return result;
  } catch (error) {
    console.error('Error in getAllSongs:', error);
@@ -79,14 +97,23 @@ export async function getAllSongs() {
  }
 }
 
-// Function to retrieve songs by genre
+// Function to retrieve user's songs by genre
 export async function getSongsByGenre(genre) {
  try {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error('Authentication required. Please login first.');
+  }
+  
   const res = await fetch(`${BASE_URL}/byGenre?genre=${encodeURIComponent(genre)}`, {
    method: 'GET',
    mode: 'cors',
    credentials: 'omit',
-   headers: createHeaders(true) // Include auth token
+   headers: {
+     "Content-Type": "application/json",
+     "Accept": "application/json",
+     "Authorization": `Bearer ${token}`
+   }
   });
   if (!res.ok) throw new Error("Genre fetch failed");
   return await res.json();
@@ -97,11 +124,20 @@ export async function getSongsByGenre(genre) {
 }
 
 export async function getSongsSortedByArtist() {
+ const token = getAuthToken();
+ if (!token) {
+   throw new Error('Authentication required. Please login first.');
+ }
+ 
  const res = await fetch(`${BASE_URL}/sortedByArtist`, {
   method: 'GET',
   mode: 'cors',
   credentials: 'omit',
-  headers: createHeaders(true) // Include auth token
+  headers: {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+    "Authorization": `Bearer ${token}`
+  }
  });
  if (!res.ok) throw new Error("Sort fetch failed");
  return await res.json();

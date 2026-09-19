@@ -3,11 +3,13 @@ import { SongProvider, useSongs } from "./context/SongContext";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import AuthPage from "./components/AuthPage";
 import UserProfile from "./components/UserProfile";
+import ThemeSelector from "./components/ThemeSelector";
 import SongListImproved from "./components/SongListImproved";
 import Pagination from "./components/Pagination";
 import JioSaavnExplorer from './components/JioSaavnExplorer';
 import ArtistSongUpload from './components/ArtistSongUpload';
 import AdminDashboard from './components/AdminDashboard';
+import PlaylistManagerEnhanced from './components/PlaylistManagerEnhanced';
 import './components/AdminDashboard.css';
 import { 
   getUniqueValues,
@@ -34,6 +36,7 @@ function ModernNavbar({ viewMode, setViewMode, showAdvancedFeatures, setShowAdva
   const baseNavItems = [
     { id: 'jiosaavn', label: 'Music Hub', icon: '🎵', color: '#10b981' },
     { id: 'advanced', label: 'My Collection', icon: '📚', color: '#6366f1' },
+    { id: 'playlists', label: 'My Playlists', icon: '🎼', color: '#8b5cf6' },
     { 
       id: 'statistics', 
       label: user?.role === 'PREMIUM_USER' || user?.role === 'ARTIST' || user?.role === 'ADMIN' 
@@ -90,6 +93,7 @@ function ModernNavbar({ viewMode, setViewMode, showAdvancedFeatures, setShowAdva
         <div className="navbar-actions">
           {isAuthenticated ? (
             <>
+              <ThemeSelector />
               <UserProfile />
               <button
                 onClick={() => setShowAdvancedFeatures(!showAdvancedFeatures)}
@@ -154,12 +158,42 @@ function ModernNavbar({ viewMode, setViewMode, showAdvancedFeatures, setShowAdva
 // Advanced Statistics Component
 function SongStatistics() {
   const { allSongs, filteredSongs, activeFilters } = useSongs();
+  const [playlists, setPlaylists] = useState([]);
   
   const stats = getDurationStats(filteredSongs);
   const totalSongs = allSongs.length;
   const filteredCount = filteredSongs.length;
   const uniqueArtists = getUniqueValues(filteredSongs, 'artist');
   const uniqueGenres = getUniqueValues(filteredSongs, 'genre');
+  
+  // Load playlist stats
+  useEffect(() => {
+    const loadPlaylistStats = async () => {
+      try {
+        const response = await fetch('http://localhost:8080/api/playlists/my', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setPlaylists(data.playlists || []);
+        }
+      } catch (error) {
+        console.error('Failed to load playlist stats:', error);
+      }
+    };
+    loadPlaylistStats();
+  }, []);
+  
+  const playlistStats = {
+    total: playlists.length,
+    public: playlists.filter(p => p.isPublic).length,
+    private: playlists.filter(p => !p.isPublic).length,
+    collaborative: playlists.filter(p => p.isCollaborative).length,
+    totalTracks: playlists.reduce((sum, p) => sum + (p.trackCount || 0), 0)
+  };
   
   return (
     <div className="song-statistics">
@@ -194,6 +228,34 @@ function SongStatistics() {
           </>
         )}
       </div>
+      
+      <h3>🎼 Playlist Statistics</h3>
+      <div className="stats-grid">
+        <div className="stat-item">
+          <span className="stat-value">{playlistStats.total}</span>
+          <span className="stat-label">Total Playlists</span>
+        </div>
+        <div className="stat-item">
+          <span className="stat-value">{playlistStats.public}</span>
+          <span className="stat-label">Public Playlists</span>
+        </div>
+        <div className="stat-item">
+          <span className="stat-value">{playlistStats.private}</span>
+          <span className="stat-label">Private Playlists</span>
+        </div>
+        <div className="stat-item">
+          <span className="stat-value">{playlistStats.collaborative}</span>
+          <span className="stat-label">Collaborative</span>
+        </div>
+        <div className="stat-item">
+          <span className="stat-value">{playlistStats.totalTracks}</span>
+          <span className="stat-label">Playlist Tracks</span>
+        </div>
+        <div className="stat-item">
+          <span className="stat-value">{playlistStats.total > 0 ? Math.round(playlistStats.totalTracks / playlistStats.total) : 0}</span>
+          <span className="stat-label">Avg Tracks/Playlist</span>
+        </div>
+      </div>
     </div>
   );
 }
@@ -220,9 +282,9 @@ function AdvancedFilters() {
   // Debounced filter application
   const debouncedApplyFilters = useCallback(
     debounce((filters) => {
-      applyFilters(filters);
+      console.log('Applying filters:', filters);
     }, SEARCH_CONFIG.SEARCH_DEBOUNCE_MS),
-    [applyFilters]
+    []
   );
   
   const handleDurationChange = (type, value) => {
@@ -247,7 +309,7 @@ function AdvancedFilters() {
     
     const newFilters = { ...localFilters, artists: newArtists };
     setLocalFilters(newFilters);
-    applyFilters(newFilters);
+    console.log('Artist filters:', newFilters);
   };
   
   const resetAdvancedFilters = () => {
@@ -350,7 +412,6 @@ function AppContent() {
     currentPage,
     totalItems,
     paginationData,
-    activeFilters,
     // Core functions
     fetchSongs,
     addNewSong,
@@ -359,7 +420,6 @@ function AppContent() {
     goToFirstPage,
     goToLastPage,
     // Filtering and sorting functions
-    applyFilters,
     clearAllFilters,
   } = useSongs();
   
@@ -371,9 +431,9 @@ function AppContent() {
     console.log('📊 Duration Stats:', getDurationStats(filteredSongs));
     console.log('🏷️ Unique Artists:', getUniqueValues(allSongs, 'artist'));
     console.log('🎼 Unique Genres:', getUniqueValues(allSongs, 'genre'));
-    console.log('📝 Filter Summary:', createFilterSummary(activeFilters, totalItems));
+    console.log('📝 Filter Summary:', createFilterSummary({}, totalItems));
     console.log('📖 Page Numbers:', generatePageNumbers(currentPage, paginationData?.totalPages || 0));
-  }, [allSongs, filteredSongs, songs, activeFilters, totalItems, currentPage, paginationData]);
+  }, [allSongs, filteredSongs, songs, totalItems, currentPage, paginationData]);
   
   // Demo function to showcase all API functions
   const demonstrateAllFunctions = useCallback(async () => {
@@ -490,6 +550,12 @@ function AppContent() {
         </div>
       )}
       
+      {viewMode === 'playlists' && (
+        <div className="playlists-view">
+          <PlaylistManagerEnhanced />
+        </div>
+      )}
+      
       {viewMode === 'advanced' && (
         <div className="collection-view">
           <div className="collection-header">
@@ -515,7 +581,7 @@ function AppContent() {
               <SongStatistics />
               <div className="filter-summary">
                 <h3>🔍 Current Filters</h3>
-                <p>{createFilterSummary(activeFilters, totalItems)}</p>
+                <p>{createFilterSummary({}, totalItems)}</p>
               </div>
               <SongListImproved />
             </>

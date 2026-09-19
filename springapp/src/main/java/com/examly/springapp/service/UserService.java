@@ -58,7 +58,7 @@ public class UserService implements UserDetailsService {
             User.Role requestedRole = User.Role.valueOf(request.getRole());
             user.setRole(requestedRole);
         } catch (IllegalArgumentException e) {
-            user.setRole(User.Role.LISTENER);
+            user.setRole(User.Role.FREE_USER);
         }
         
         // Save user

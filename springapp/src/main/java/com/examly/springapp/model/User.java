@@ -64,7 +64,7 @@ public class User implements UserDetails {
     
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Role role = Role.LISTENER;
+    private Role role = Role.FREE_USER;
     
     @Column(name = "subscription_tier")
     @Enumerated(EnumType.STRING)
@@ -142,7 +142,7 @@ public class User implements UserDetails {
     }
     
     public enum Role {
-        LISTENER,      // 🎧 Free tier - ads, online only, basic features
+        FREE_USER,     // 🎧 Free tier - ads, online only, basic features
         PREMIUM_USER,  // 💎 Paid tier - no ads, offline, high quality
         ARTIST,        // 🎤 Content creator - upload, analytics, manage music
         ADMIN          // 🛠️ System admin - full control, user management, platform oversight

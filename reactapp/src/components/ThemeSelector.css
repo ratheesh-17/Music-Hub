@@ -1,0 +1,286 @@
+/* Theme Selector Styles */
+.theme-selector {
+  position: relative;
+  display: inline-block;
+}
+
+.theme-toggle-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.theme-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.theme-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  min-width: 280px;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+}
+
+.theme-selector:hover .theme-dropdown {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.theme-dropdown h4 {
+  margin: 0 0 1rem 0;
+  color: #374151;
+  font-size: 1.1rem;
+}
+
+.theme-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.theme-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  background: #f9fafb;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.theme-option:hover:not(.locked) {
+  border-color: #667eea;
+  background: #f0f4ff;
+}
+
+.theme-option.active {
+  border-color: #667eea;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+}
+
+.theme-option.locked {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #f3f4f6;
+}
+
+.theme-icon {
+  font-size: 1.5rem;
+}
+
+.theme-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.lock-icon {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  font-size: 0.8rem;
+}
+
+.premium-upsell {
+  text-align: center;
+  padding: 1rem;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border-radius: 12px;
+  border: 1px solid #f59e0b;
+}
+
+.premium-upsell p {
+  margin: 0 0 0.75rem 0;
+  color: #92400e;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.upgrade-btn {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.upgrade-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+/* Theme Variables */
+:root {
+  --primary-color: #667eea;
+  --secondary-color: #764ba2;
+  --background-color: #ffffff;
+  --surface-color: #f9fafb;
+  --text-color: #374151;
+  --text-secondary: #6b7280;
+  --border-color: #e5e7eb;
+}
+
+/* Light Theme */
+[data-theme="light"] {
+  --primary-color: #667eea;
+  --secondary-color: #764ba2;
+  --background-color: #ffffff;
+  --surface-color: #f9fafb;
+  --text-color: #374151;
+  --text-secondary: #6b7280;
+  --border-color: #e5e7eb;
+}
+
+/* Dark Theme */
+[data-theme="dark"] {
+  --primary-color: #818cf8;
+  --secondary-color: #a78bfa;
+  --background-color: #111827;
+  --surface-color: #1f2937;
+  --text-color: #f9fafb;
+  --text-secondary: #d1d5db;
+  --border-color: #374151;
+}
+
+.theme-dark {
+  background: linear-gradient(135deg, #111827 0%, #1f2937 50%, #374151 100%);
+  color: #f9fafb;
+}
+
+/* Premium Pink Theme */
+[data-theme="premium-pink"] {
+  --primary-color: #ec4899;
+  --secondary-color: #f472b6;
+  --background-color: #fdf2f8;
+  --surface-color: #fce7f3;
+  --text-color: #831843;
+  --text-secondary: #be185d;
+  --border-color: #f9a8d4;
+}
+
+.theme-premium-pink {
+  background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 25%, #fbcfe8 75%, #f9a8d4 100%);
+  color: #831843;
+}
+
+/* Premium Gold Theme */
+[data-theme="premium-gold"] {
+  --primary-color: #f59e0b;
+  --secondary-color: #fbbf24;
+  --background-color: #fffbeb;
+  --surface-color: #fef3c7;
+  --text-color: #92400e;
+  --text-secondary: #d97706;
+  --border-color: #fde68a;
+}
+
+.theme-premium-gold {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 25%, #fde68a 75%, #fcd34d 100%);
+  color: #92400e;
+}
+
+/* Premium Purple Theme */
+[data-theme="premium-purple"] {
+  --primary-color: #8b5cf6;
+  --secondary-color: #a78bfa;
+  --background-color: #f5f3ff;
+  --surface-color: #ede9fe;
+  --text-color: #5b21b6;
+  --text-secondary: #7c3aed;
+  --border-color: #c4b5fd;
+}
+
+.theme-premium-purple {
+  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 25%, #ddd6fe 75%, #c4b5fd 100%);
+  color: #5b21b6;
+}
+
+/* Global Theme Application */
+body {
+  background: var(--background-color) !important;
+  color: var(--text-color) !important;
+  transition: all 0.3s ease;
+}
+
+.App {
+  background: var(--background-color) !important;
+  color: var(--text-color) !important;
+  min-height: 100vh;
+}
+
+/* Playlist Components */
+.playlist-manager-enhanced {
+  background: var(--background-color) !important;
+}
+
+.playlist-header {
+  background: var(--surface-color) !important;
+  color: var(--text-color) !important;
+}
+
+.playlist-card {
+  background: var(--surface-color) !important;
+  color: var(--text-color) !important;
+  border-color: var(--border-color) !important;
+}
+
+.playlist-title {
+  color: var(--text-color) !important;
+}
+
+.playlist-description {
+  color: var(--text-secondary) !important;
+}
+
+.create-btn {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)) !important;
+}
+
+.search-box input {
+  background: var(--surface-color) !important;
+  color: var(--text-color) !important;
+  border-color: var(--border-color) !important;
+}
+
+.filter-select, .sort-select {
+  background: var(--surface-color) !important;
+  color: var(--text-color) !important;
+  border-color: var(--border-color) !important;
+}
+
+.modern-navbar {
+  background: var(--surface-color) !important;
+  color: var(--text-color) !important;
+}
+
+.nav-item {
+  color: var(--text-color) !important;
+}
+
+.nav-item.active {
+  background: var(--primary-color) !important;
+  color: white !important;
+}

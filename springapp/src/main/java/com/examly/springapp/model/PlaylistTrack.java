@@ -1,26 +1,11 @@
 package com.examly.springapp.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "playlist_tracks")
 public class PlaylistTrack {
-    
-    public PlaylistTrack() {}
-    
-    public PlaylistTrack(Long id, Playlist playlist, Song track, int position, User addedBy, LocalDateTime addedDate) {
-        this.id = id;
-        this.playlist = playlist;
-        this.track = track;
-        this.position = position;
-        this.addedBy = addedBy;
-        this.addedDate = addedDate;
-    }
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,23 +15,43 @@ public class PlaylistTrack {
     @JoinColumn(name = "playlist_id", nullable = false)
     private Playlist playlist;
     
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "track_id", nullable = false)
-    private Song track;
+    @Column(nullable = false)
+    private String title;
     
-    @Column(name = "position")
-    private int position;
+    @Column(nullable = false)
+    private String artist;
     
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "added_by")
-    private User addedBy;
+    private String album;
+    
+    private Integer duration;
+    
+    @Column(name = "audio_url")
+    private String audioUrl;
     
     @Column(name = "added_date")
     private LocalDateTime addedDate;
     
+    @Column(name = "position_order")
+    private Integer position = 0;
+    
+    @Column(name = "added_by_email")
+    private String addedByEmail;
+    
     @PrePersist
     protected void onCreate() {
         addedDate = LocalDateTime.now();
+    }
+    
+    // Constructors
+    public PlaylistTrack() {}
+    
+    public PlaylistTrack(Playlist playlist, String title, String artist, String album, Integer duration, String audioUrl) {
+        this.playlist = playlist;
+        this.title = title;
+        this.artist = artist;
+        this.album = album;
+        this.duration = duration;
+        this.audioUrl = audioUrl;
     }
     
     // Getters and Setters
@@ -56,15 +61,27 @@ public class PlaylistTrack {
     public Playlist getPlaylist() { return playlist; }
     public void setPlaylist(Playlist playlist) { this.playlist = playlist; }
     
-    public Song getTrack() { return track; }
-    public void setTrack(Song track) { this.track = track; }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
     
-    public int getPosition() { return position; }
-    public void setPosition(int position) { this.position = position; }
+    public String getArtist() { return artist; }
+    public void setArtist(String artist) { this.artist = artist; }
     
-    public User getAddedBy() { return addedBy; }
-    public void setAddedBy(User addedBy) { this.addedBy = addedBy; }
+    public String getAlbum() { return album; }
+    public void setAlbum(String album) { this.album = album; }
+    
+    public Integer getDuration() { return duration; }
+    public void setDuration(Integer duration) { this.duration = duration; }
+    
+    public String getAudioUrl() { return audioUrl; }
+    public void setAudioUrl(String audioUrl) { this.audioUrl = audioUrl; }
     
     public LocalDateTime getAddedDate() { return addedDate; }
     public void setAddedDate(LocalDateTime addedDate) { this.addedDate = addedDate; }
+    
+    public Integer getPosition() { return position; }
+    public void setPosition(Integer position) { this.position = position; }
+    
+    public String getAddedByEmail() { return addedByEmail; }
+    public void setAddedByEmail(String addedByEmail) { this.addedByEmail = addedByEmail; }
 }

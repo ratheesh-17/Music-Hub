@@ -155,9 +155,18 @@ export function SongProvider({ children }) {
 
   // Fetch songs based on filter
   const fetchSongs = useCallback(async (activeFilter = state.filter) => {
+    // Check if user is authenticated
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      console.log('No auth token found, skipping song fetch');
+      dispatch({ type: SONG_ACTIONS.SET_SONGS, payload: [] });
+      return;
+    }
+    
     dispatch({ type: SONG_ACTIONS.SET_LOADING, payload: true });
     try {
       let data = [];
+      console.log(`Fetching user-specific songs with filter: ${activeFilter}`);
       if (activeFilter === 'all') {
         data = await getAllSongs();
       } else if (activeFilter === 'sorted') {
@@ -165,9 +174,15 @@ export function SongProvider({ children }) {
       } else {
         data = await getSongsByGenre(activeFilter);
       }
+      console.log(`Fetched ${data.length} songs for current user`);
       dispatch({ type: SONG_ACTIONS.SET_SONGS, payload: data });
     } catch (error) {
-      dispatch({ type: SONG_ACTIONS.SET_ERROR, payload: UI_MESSAGES.ERROR_FETCH });
+      console.error('Error fetching user songs:', error);
+      if (error.message.includes('Authentication required')) {
+        dispatch({ type: SONG_ACTIONS.SET_ERROR, payload: 'Please login to view your collection' });
+      } else {
+        dispatch({ type: SONG_ACTIONS.SET_ERROR, payload: UI_MESSAGES.ERROR_FETCH });
+      }
       dispatch({ type: SONG_ACTIONS.SET_SONGS, payload: [] });
     }
     dispatch({ type: SONG_ACTIONS.SET_LOADING, payload: false });
@@ -224,6 +239,11 @@ export function SongProvider({ children }) {
   // Clear messages
   const clearMessage = () => {
     dispatch({ type: SONG_ACTIONS.CLEAR_MESSAGE });
+  };
+  
+  // Refresh songs (useful when user logs in/out)
+  const refreshSongs = () => {
+    fetchSongs('all');
   };
 
   // Pagination functions
@@ -284,9 +304,15 @@ export function SongProvider({ children }) {
     dispatch({ type: SONG_ACTIONS.SET_SEARCH_QUERY, payload: '' });
   };
 
-  // Load songs when filter changes
+  // Load songs when filter changes or when user logs in
   useEffect(() => {
-    fetchSongs();
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      fetchSongs();
+    } else {
+      // Clear songs if no token
+      dispatch({ type: SONG_ACTIONS.SET_SONGS, payload: [] });
+    }
   }, [fetchSongs]);
 
   const value = {
@@ -316,6 +342,7 @@ export function SongProvider({ children }) {
     removeSong,
     setFilter,
     clearMessage,
+    refreshSongs,
     
     // Pagination actions
     setCurrentPage,

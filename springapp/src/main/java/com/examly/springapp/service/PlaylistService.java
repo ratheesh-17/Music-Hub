@@ -1,56 +1,107 @@
 package com.examly.springapp.service;
 
-import com.examly.springapp.exception.PlaylistNotFoundException;
+import com.examly.springapp.dto.CreatePlaylistRequest;
 import com.examly.springapp.model.Playlist;
+import com.examly.springapp.model.PlaylistTrack;
+import com.examly.springapp.model.User;
 import com.examly.springapp.repository.PlaylistRepository;
+import com.examly.springapp.repository.PlaylistTrackRepository;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class PlaylistService {
     
-    private static final Logger log = LoggerFactory.getLogger(PlaylistService.class);
-
     private final PlaylistRepository playlistRepository;
-
-    @Transactional
-    public Playlist createPlaylist(Playlist playlist) {
-        log.info("Creating playlist: {}", playlist.getTitle());
+    private final PlaylistTrackRepository playlistTrackRepository;
+    
+    public Playlist createPlaylist(User user, CreatePlaylistRequest request) {
+        Playlist playlist = new Playlist();
+        playlist.setUser(user);
+        playlist.setTitle(request.getTitle());
+        playlist.setDescription(request.getDescription());
+        playlist.setPublic(request.isPublic());
+        playlist.setCollaborative(request.isCollaborative());
+        
         return playlistRepository.save(playlist);
     }
-
+    
     public List<Playlist> getUserPlaylists(Long userId) {
-        log.info("Retrieving playlists for user: {}", userId);
-        return playlistRepository.findByUserId(userId);
+        return playlistRepository.findByUserIdOrderByCreatedDateDesc(userId);
     }
-
-    public Playlist getPlaylistById(Long id) {
-        return playlistRepository.findById(id)
-                .orElseThrow(() -> new PlaylistNotFoundException("Playlist with id " + id + " not found"));
-    }
-
-    public List<Playlist> getPublicPlaylists() {
-        log.info("Retrieving public playlists");
-        return playlistRepository.findByIsPublicTrueOrderByFollowerCountDesc();
-    }
-
-    @Transactional
-    public void deletePlaylist(Long id) {
-        log.info("Deleting playlist with ID: {}", id);
-        if (!playlistRepository.existsById(id)) {
-            throw new PlaylistNotFoundException("Playlist with id " + id + " not found");
+    
+    public Playlist getPlaylistDetails(Long playlistId, Long userId) {
+        Playlist playlist = playlistRepository.findById(playlistId)
+            .orElseThrow(() -> new RuntimeException("Playlist not found"));
+            
+        if (!playlist.getUser().getId().equals(userId) && !playlist.isPublic()) {
+            throw new RuntimeException("Access denied to private playlist");
         }
-        playlistRepository.deleteById(id);
+        
+        return playlist;
     }
-
-    public List<Playlist> searchPlaylists(String query) {
-        log.info("Searching playlists with query: {}", query);
-        return playlistRepository.findByTitleContainingIgnoreCase(query);
+    
+    public void deletePlaylist(Long playlistId, Long userId) {
+        Playlist playlist = playlistRepository.findById(playlistId)
+            .orElseThrow(() -> new RuntimeException("Playlist not found"));
+            
+        if (!playlist.getUser().getId().equals(userId)) {
+            throw new RuntimeException("Cannot delete playlist - not owner");
+        }
+        
+        playlistRepository.delete(playlist);
+    }
+    
+    public PlaylistTrack addSongToPlaylist(Long playlistId, Map<String, Object> songData, Long userId, String userEmail) {
+        Playlist playlist = playlistRepository.findById(playlistId)
+            .orElseThrow(() -> new RuntimeException("Playlist not found"));
+            
+        if (!playlist.getUser().getId().equals(userId) && !playlist.isCollaborative()) {
+            throw new RuntimeException("Cannot add songs to this playlist");
+        }
+        
+        PlaylistTrack track = new PlaylistTrack();
+        track.setPlaylist(playlist);
+        track.setTitle((String) songData.get("title"));
+        track.setArtist((String) songData.get("artist"));
+        track.setAlbum((String) songData.get("album"));
+        track.setDuration((Integer) songData.get("duration"));
+        track.setAudioUrl((String) songData.get("audioUrl"));
+        track.setAddedByEmail(userEmail);
+        
+        return playlistTrackRepository.save(track);
+    }
+    
+    public List<PlaylistTrack> getPlaylistTracks(Long playlistId, Long userId) {
+        Playlist playlist = playlistRepository.findById(playlistId)
+            .orElseThrow(() -> new RuntimeException("Playlist not found"));
+            
+        if (!playlist.getUser().getId().equals(userId) && !playlist.isPublic()) {
+            throw new RuntimeException("Access denied to private playlist");
+        }
+        
+        return playlistTrackRepository.findByPlaylistIdOrderByPosition(playlistId);
+    }
+    
+    public void removeSongFromPlaylist(Long playlistId, Long trackId, Long userId) {
+        Playlist playlist = playlistRepository.findById(playlistId)
+            .orElseThrow(() -> new RuntimeException("Playlist not found"));
+            
+        if (!playlist.getUser().getId().equals(userId) && !playlist.isCollaborative()) {
+            throw new RuntimeException("Cannot remove songs from this playlist");
+        }
+        
+        PlaylistTrack track = playlistTrackRepository.findById(trackId)
+            .orElseThrow(() -> new RuntimeException("Track not found"));
+            
+        if (!track.getPlaylist().getId().equals(playlistId)) {
+            throw new RuntimeException("Track does not belong to this playlist");
+        }
+        
+        playlistTrackRepository.delete(track);
     }
 }

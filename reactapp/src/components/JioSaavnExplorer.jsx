@@ -6,10 +6,11 @@ import {
   formatJioSaavnPlaylist,
   getTrendingSearches 
 } from '../services/jiosaavn-api';
+import { getMyPlaylists, addSongToPlaylist } from '../services/playlist-api';
 import './JioSaavnExplorer.css';
 
 // JioSaavn Song Card Component
-function JioSaavnSongCard({ song, onAddToLocal }) {
+function JioSaavnSongCard({ song, onAddToLocal, onAddToPlaylist }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [audio, setAudio] = useState(null);
   
@@ -169,6 +170,13 @@ function JioSaavnSongCard({ song, onAddToLocal }) {
           >
             ➕ Add to My Songs
           </button>
+          <button 
+            className="add-to-playlist-btn"
+            onClick={() => onAddToPlaylist(song)}
+            title="Add to playlist"
+          >
+            📋 Add to Playlist
+          </button>
           {song.url && (
             <a 
               href={song.url} 
@@ -248,14 +256,27 @@ function JioSaavnExplorer({ onAddSong }) {
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const [playlists, setPlaylists] = useState([]);
+  const [showPlaylistModal, setShowPlaylistModal] = useState(false);
+  const [selectedSong, setSelectedSong] = useState(null);
   
   const trendingSearches = getTrendingSearches();
   
   useEffect(() => {
     // Load some initial content
-    handleTrendingSearch('bollywood hits');
+    handleTrendingSearch('english hits');
+    loadUserPlaylists();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const loadUserPlaylists = async () => {
+    try {
+      const userPlaylists = await getMyPlaylists();
+      setPlaylists(userPlaylists);
+    } catch (err) {
+      console.error('Failed to load playlists:', err);
+    }
+  };
   
   const handleSearch = async (query = searchQuery, page = 0, append = false) => {
     if (!query.trim()) return;
@@ -309,6 +330,31 @@ function JioSaavnExplorer({ onAddSong }) {
       await onAddSong(song);
     } catch (error) {
       console.error('Failed to add song to local collection:', error);
+    }
+  };
+
+  const handleAddToPlaylist = (song) => {
+    setSelectedSong(song);
+    setShowPlaylistModal(true);
+  };
+
+  const addSongToPlaylistHandler = async (playlistId) => {
+    try {
+      const songData = {
+        title: selectedSong.songTitle,
+        artist: selectedSong.artist,
+        album: selectedSong.album,
+        duration: selectedSong.duration,
+        audioUrl: selectedSong.downloadUrl || selectedSong.previewUrl || ""
+      };
+      
+      await addSongToPlaylist(playlistId, songData);
+      alert(`Song "${selectedSong.songTitle}" added to playlist!`);
+      setShowPlaylistModal(false);
+      setSelectedSong(null);
+    } catch (error) {
+      console.error('Failed to add song to playlist:', error);
+      alert('Failed to add song to playlist');
     }
   };
   
@@ -384,6 +430,7 @@ function JioSaavnExplorer({ onAddSong }) {
                   key={`${item.id}_${index}`} 
                   song={item} 
                   onAddToLocal={handleAddToLocal}
+                  onAddToPlaylist={handleAddToPlaylist}
                 />
               ) : (
                 <JioSaavnPlaylistCard 
@@ -418,6 +465,56 @@ function JioSaavnExplorer({ onAddSong }) {
         <div className="no-results">
           <h3>😔 No Results Found</h3>
           <p>Try searching for different terms or check your spelling.</p>
+        </div>
+      )}
+
+      {/* Add to Playlist Modal */}
+      {showPlaylistModal && selectedSong && (
+        <div className="modal-overlay" onClick={() => setShowPlaylistModal(false)}>
+          <div className="playlist-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>📋 Add to Playlist</h3>
+              <button 
+                className="close-btn"
+                onClick={() => setShowPlaylistModal(false)}
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="modal-content">
+              <div className="selected-song-info">
+                <h4>🎵 {selectedSong.songTitle}</h4>
+                <p>by {selectedSong.artist}</p>
+              </div>
+              
+              <div className="playlist-list">
+                {playlists.length === 0 ? (
+                  <div className="no-playlists">
+                    <p>📭 No playlists found</p>
+                    <p>Create a playlist first to add songs</p>
+                  </div>
+                ) : (
+                  playlists.map((playlist) => (
+                    <div 
+                      key={playlist.id} 
+                      className="playlist-option"
+                      onClick={() => addSongToPlaylistHandler(playlist.id)}
+                    >
+                      <div className="playlist-info">
+                        <h4>{playlist.title}</h4>
+                        <p>{playlist.trackCount || 0} songs</p>
+                      </div>
+                      <div className="playlist-meta">
+                        {playlist.isPublic ? '🌍' : '🔒'}
+                        {playlist.isCollaborative && '🤝'}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

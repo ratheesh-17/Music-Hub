@@ -2,6 +2,7 @@ package com.examly.springapp.repository;
 
 import com.examly.springapp.model.Song;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -47,4 +48,22 @@ public interface SongRepository extends JpaRepository<Song, Long> {
      */
     @Query("SELECT s FROM Song s WHERE s.isActive = true ORDER BY s.playCount DESC")
     List<Song> findMostPlayed();
+    
+    /**
+     * User-specific queries
+     */
+    List<Song> findByUserIdOrderByUploadDateDesc(Long userId);
+    List<Song> findByUserIdAndGenreOrderByUploadDateDesc(Long userId, String genre);
+    List<Song> findByUserIdOrderByArtistAsc(Long userId);
+    List<Song> findByUserIdAndTitleContainingIgnoreCase(Long userId, String title);
+    
+    @Query("SELECT COUNT(s) FROM Song s WHERE s.user.id = :userId")
+    long countByUserId(@Param("userId") Long userId);
+    
+    @Query("SELECT COUNT(s) FROM Song s WHERE s.user IS NULL")
+    long countOrphanedSongs();
+    
+    @Query("DELETE FROM Song s WHERE s.user IS NULL")
+    @Modifying
+    void deleteOrphanedSongs();
 }
